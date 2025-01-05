@@ -3,6 +3,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram import types
 from app.messages import START_MESSAGE, HELP_MESSAGE, INSTALL_WG_ANDROID, INSTALL_WG_IOS, INSTALL_WG_LINUX, INSTALL_WG_WINDOWS, GET_VPN
 from aiogram.enums import ParseMode
+from user_cards.card_manipulation import UserInfo
 
 
 # Commands start
@@ -13,13 +14,37 @@ async def start(message: types.Message) -> None:
         callback_data='get_vpn'
     )
 
-    await message.answer(
-        f"👋 Привет, {message.from_user.first_name}!\n\n"
-        ""
-        f"{START_MESSAGE}",
-        parse_mode=ParseMode.MARKDOWN,
-        reply_markup=menu_builder.as_markup()
-    )
+    username = f"@{message.from_user.username}"
+
+    user_photos = await message.bot.get_user_profile_photos(message.from_user.id)
+    if user_photos.total_count > 0:
+        photo = user_photos.photos[0][-1]
+        file_id = photo.file_id
+        file = await message.bot.get_file(file_id)
+        file_path = file.file_path
+        file_name = f"{message.from_user.id}.png"
+        await message.bot.download_file(file_path, f'./user_cards/users_photos/{file_name}')
+    else:
+        file_path = './user_cards/users_photos/'
+        file_name = 'github-mark.png'
+
+    user_info = UserInfo()
+    user_info.card(user_name=username,
+                   photo_name=file_name,
+                   user_id=str(message.from_user.id),
+                   user_status="Diamond",
+                   vpn_status=False,
+                   provider="WireGuard")
+
+    
+
+    # await message.answer(
+    #     f"👋 Привет, {message.from_user.first_name}!\n\n"
+    #     ""
+    #     f"{START_MESSAGE}",
+    #     parse_mode=ParseMode.MARKDOWN,
+    #     reply_markup=menu_builder.as_markup()
+    # )
 
 # Command help
 async def help(message: types.Message) -> None:
